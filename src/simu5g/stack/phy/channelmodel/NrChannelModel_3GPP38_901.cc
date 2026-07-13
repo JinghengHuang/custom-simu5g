@@ -240,11 +240,17 @@ double NrChannelModel_3GPP38_901::computeRuralMacro(double threeDimDistance, dou
     double min1 = (A < 10) ? A : 10;
     double min2 = (B < 14.77) ? B : 14.77;
     double pLoss_los = 0.0;
+    // TR 38.901 Table 7.4.1-1 expresses f_c in GHz in the RMa PL1 term (its stated validity
+    // range is 0.5-30 GHz). Upstream passed carrierFrequencyHz_ (Hz), inflating the log
+    // argument by 1e9, i.e. adding a constant 20*log10(1e9) = 180 dB of path loss and killing
+    // the link outright. The NLOS branch below, and every other model in this file, already use
+    // the GHz form; only these two lines did not. Cf. ns-3 ThreeGppRmaPropagationLossModel::Pl1,
+    // which computes the same term as (frequency / 1e9 / 3.0).
     if (twoDimDistance < dbp) {
-        pLoss_los = 20 * log10(40 * M_PI * threeDimDistance * (carrierFrequencyHz_ / 3.0)) + min1 * log10(threeDimDistance) - min2 + 0.002 * log10(h) * threeDimDistance;
+        pLoss_los = 20 * log10(40 * M_PI * threeDimDistance * (carrierFrequencyGHz_ / 3.0)) + min1 * log10(threeDimDistance) - min2 + 0.002 * log10(h) * threeDimDistance;
     }
     else {
-        pLoss_los = 20 * log10(40 * M_PI * dbp * (carrierFrequencyHz_ / 3.0)) + min1 * log10(dbp) - min2 + 0.002 * log10(h) * dbp
+        pLoss_los = 20 * log10(40 * M_PI * dbp * (carrierFrequencyGHz_ / 3.0)) + min1 * log10(dbp) - min2 + 0.002 * log10(h) * dbp
             + 40 * log10(threeDimDistance / dbp);
     }
     pLoss_los += penetrationLoss;
